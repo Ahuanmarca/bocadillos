@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Juego de Bocadillos</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f2f2f2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem;
+      margin: 0;
+      min-height: 100vh;
+    }
+    h1 {
+      font-size: 1.8rem;
+      text-align: center;
+    }
+    .feedback {
+      margin: 10px;
+      font-weight: bold;
+      font-size: 1.2rem;
+      text-align: center;
+    }
+    .contenedores {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      width: 100%;
+      max-width: 1000px;
+      margin-top: 1rem;
+    }
+    .contenedor {
+      background: white;
+      padding: 1rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      flex: 1 1 280px;
+      min-width: 40%;
+    }
+    .contenedor h2 {
+      margin-bottom: 0.5rem;
+      font-size: 1.1rem;
+    }
+    button {
+      padding: 0.7rem 1.2rem;
+      font-size: 1rem;
+      cursor: pointer;
+      border-radius: 5px;
+      border: none;
+      background-color: #4CAF50;
+      color: white;
+      transition: background 0.3s;
+      width: 100%;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+
+    @media (max-width: 500px) {
+      h1 {
+        font-size: 1.4rem;
+      }
+      .feedback {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1 id="titulo">Cargando...</h1>
+  <div class="feedback" id="feedback"></div>
+  <div class="contenedores">
+    <div class="contenedor" id="izquierda"><h2>Carnes</h2></div>
+    <div class="contenedor" id="derecha"><h2>Fiambres / Queso</h2></div>
+    <div class="contenedor" id="complementos"><h2>Complementos</h2></div>
+  </div>
+
+  <script>
+    const bocadillos = [
+      { nombre: "Chivito", receta: ["Mayonesa", "Lechuga", "Tomate rodajas", "Lomo de cerdo", "Beicon"] },
+      { nombre: "Brascada", receta: ["Ternera", "Jamón", "Cebolla"] },
+      { nombre: "Almusafes", receta: ["Sobrasada", "Queso", "Cebolla"] },
+      { nombre: "Valencia", receta: ["Tomate rayado", "Salsa verde", "Lomo de cerdo"] },
+      { nombre: "Nápoles", receta: ["Jamón", "Queso", "Huevo frito", "Orégano"] },
+      { nombre: "Mediterráneo", receta: ["Mayonesa", "Pechuga de pollo", "Beicon", "Cebolla"] },
+      { nombre: "Campero", receta: ["Pechuga de pollo", "Beicon", "Pimiento", "Cebolla", "Mayonesa"] }
+    ];
+
+    const ingredientes = {
+      izquierda: ["Lomo de cerdo", "Ternera", "Pechuga de pollo"],
+      derecha: ["Queso", "Beicon", "Jamón"],
+      complementos: [
+        "Lechuga", "Tomate rodajas", "Cebolla", "Pimiento",
+        "Tomate rayado", "Salsa verde", "Mayonesa", "Sobrasada",
+        "Huevo frito", "Orégano"
+      ]
+    };
+
+    let indice = 0;
+    let seleccion = [];
+
+    const titulo = document.getElementById("titulo");
+    const feedback = document.getElementById("feedback");
+    const contIzq = document.getElementById("izquierda");
+    const contDer = document.getElementById("derecha");
+    const contComp = document.getElementById("complementos");
+
+    function cargarBocadillo() {
+      const b = bocadillos[indice];
+      titulo.textContent = b.nombre;
+      seleccion = [];
+      feedback.textContent = "";
+    }
+
+    function crearBotones() {
+      contIzq.innerHTML = "<h2>Carnes</h2>";
+      contDer.innerHTML = "<h2>Fiambres / Queso</h2>";
+      contComp.innerHTML = "<h2>Complementos</h2>";
+
+      ingredientes.izquierda.forEach(ing => {
+        const btn = document.createElement("button");
+        btn.textContent = ing;
+        btn.onclick = () => seleccionarIngrediente(ing);
+        contIzq.appendChild(btn);
+      });
+
+      ingredientes.derecha.forEach(ing => {
+        const btn = document.createElement("button");
+        btn.textContent = ing;
+        btn.onclick = () => seleccionarIngrediente(ing);
+        contDer.appendChild(btn);
+      });
+
+      ingredientes.complementos.forEach(ing => {
+        const btn = document.createElement("button");
+        btn.textContent = ing;
+        btn.onclick = () => seleccionarIngrediente(ing);
+        contComp.appendChild(btn);
+      });
+    }
+
+    function seleccionarIngrediente(ing) {
+      const receta = bocadillos[indice].receta;
+      const paso = seleccion.length;
+      if (ing === receta[paso]) {
+        seleccion.push(ing);
+        feedback.textContent = "✅ Correcto";
+        if (seleccion.length === receta.length) {
+          feedback.textContent = "🎉 Bocadillo completo!";
+          setTimeout(() => {
+            indice = (indice + 1) % bocadillos.length;
+            cargarBocadillo();
+          }, 2000);
+        }
+      } else {
+        feedback.textContent = "❌ Incorrecto. Intenta de nuevo.";
+        seleccion = [];
+      }
+    }
+
+    crearBotones();
+    cargarBocadillo();
+  </script>
+</body>
+</html>
