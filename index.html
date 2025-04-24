@@ -1,340 +1,368 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Juego de Bocadillos</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      background: #f2f2f2;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin: 0;
-      padding: 1rem;
-    }
-
-    .contenedor-app {
-      width: 100%;
-      max-width: 430px; /* simula pantalla de móvil grande */
-    }
-
-    h1 {
-      font-size: 1.8rem;
-      text-align: center;
-      margin-bottom: 0.5rem;
-    }
-
-    #progreso {
-      height: 1.6rem;
-      margin-bottom: 0.5rem;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      justify-content: center;
-    }
-
-    .check {
-      color: green;
-      font-size: 1.2rem;
-    }
-
-    .contador {
-      font-weight: bold;
-      font-size: 1rem;
-    }
-
-    .feedback {
-      min-height: 1.6rem;
-      margin: 10px 0;
-      font-weight: bold;
-      font-size: 1.2rem;
-      text-align: center;
-      white-space: pre-wrap;
-    }
-
-    .contenedores {
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      gap: 0.75rem;
-    }
-
-    .fila {
-      display: flex;
-      flex-direction: row;
-      flex-wrap: nowrap;
-      justify-content: center;
-      gap: 0.5rem;
-    }
-
-    .contenedor {
-      background: white;
-      padding: 0.5rem;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      flex: 0 0 auto;
-      min-width: 120px;
-    }
-
-    .contenedor h2 {
-      margin-bottom: 0.25rem;
-      font-size: 1rem;
-    }
-
-    .complementos {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 0.4rem;
-    }
-
-    button {
-      padding: 0.5rem 0.8rem;
-      font-size: 0.95rem;
-      cursor: pointer;
-      border-radius: 5px;
-      border: none;
-      background-color: #4CAF50;
-      color: white;
-      transition: background 0.3s;
-    }
-
-    button:hover {
-      background-color: #45a049;
-    }
-
-    .confeti {
-      position: fixed;
-      width: 8px;
-      height: 8px;
-      background: red;
-      opacity: 0.9;
-      z-index: 9999;
-      pointer-events: none;
-      border-radius: 2px;
-    }
-
-  </style>
-</head>
-<body>
-  <div class="contenedor-app">
-    <h1 id="titulo">Cargando...</h1>
-    <div id="progreso">
-      <div class="contador" id="contador">0 / 0</div>
-      <div id="checks"></div>
-    </div>
-    <div class="feedback" id="feedback"> </div>
-    <div class="contenedores">
-      <div class="fila">
-        <div class="contenedor" id="izquierda"><h2>Carnes</h2></div>
-        <div class="contenedor" id="derecha"><h2>Fiambres / Queso</h2></div>
-      </div>
-      <div class="contenedor" id="complementos">
-        <h2>Complementos</h2>
-        <div class="complementos" id="complementos-grid"></div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const bocadillos = [
-      { nombre: "Chivito", receta: ["Mayonesa", "Lechuga", "Tomate", "Lomo", "Beicon"] },
-      { nombre: "Brascada", receta: ["Ternera", "Jamón", "Cebolla"] },
-      { nombre: "Almusafes", receta: ["Sobrasada", "Queso", "Cebolla"] },
-      { nombre: "Manchego", receta: ["Chuletas", "Ajoaceite", "Huevo frito"] },
-      { nombre: "Valencia", receta: ["Tomate rayado", "Salsa verde", "Lomo"] },
-      { nombre: "Nápoles", receta: ["Jamón", "Queso", "Huevo frito", "Orégano"] },
-      { nombre: "Mediterráneo", receta: ["Mayonesa", "Pechuga", "Beicon", "Cebolla"] },
-      { nombre: "Ibérico", receta: ["Tomate rayado", "Jamón"] },
-      { nombre: "Pagés", receta: ["Tomate rayado", "Longaniza"] },
-      { nombre: "Queso", receta: ["Tomate rayado", "Queso"] },
-      { nombre: "Campero", receta: ["Mayonesa", "Pechuga", "Beicon", "Pimiento", "Cebolla"] }
-    ];
-  
-    const ingredientes = {
-      izquierda: ["Lomo", "Ternera", "Pechuga"],
-      derecha: ["Queso", "Beicon", "Jamón"],
-      complementos: [
-        "Lechuga", "Tomate", "Cebolla", "Pimiento",
-        "Tomate rayado", "Salsa verde", "Mayonesa", "Sobrasada",
-        "Huevo frito", "Orégano", "Chuletas", "Ajoaceite", "Longaniza"
-      ]
-    };
-  
-    let seleccion = [];
-  
-    // Estadísticas con campos extendidos
-    let stats = bocadillos.map(() => ({
-      aciertos: 0,
-      fallos: 0,
-      ultimaVez: null,
-      congelado: false
-    }));
-  
-    const titulo = document.getElementById("titulo");
-    const feedback = document.getElementById("feedback");
-    const contIzq = document.getElementById("izquierda");
-    const contDer = document.getElementById("derecha");
-    const contComp = document.getElementById("complementos-grid");
-    const checks = document.getElementById("checks");
-    const contador = document.getElementById("contador");
-  
-    function elegirBocadillo() {
-      const ahora = Date.now();
-      const ponderado = [];
-  
-      bocadillos.forEach((boc, i) => {
-        const s = stats[i];
-        const fallos = s.fallos ?? 0;
-        const antiguedad = s.ultimaVez ? (ahora - s.ultimaVez) / 1000 : 99999;
-  
-        // Bocadillos nunca mostrados => prioridad máxima
-        const peso = 1 + fallos * 3 + antiguedad / 30; // puedes ajustar divisores
-        for (let j = 0; j < Math.max(1, Math.floor(peso)); j++) {
-          ponderado.push(i);
-        }
-      });
-  
-      const elegido = ponderado[Math.floor(Math.random() * ponderado.length)];
-      stats[elegido].ultimaVez = Date.now(); // actualiza último uso
-      return bocadillos[elegido];
-    }
-  
-    let bocadilloActual = null;
-    let idxActual = null;
-  
-    function cargarBocadillo() {
-      bocadilloActual = elegirBocadillo();
-      idxActual = bocadillos.indexOf(bocadilloActual);
-      titulo.textContent = bocadilloActual.nombre;
-      seleccion = [];
-      stats[idxActual].congelado = false; // descongelar siempre al iniciar
-      feedback.textContent = " ";
-      actualizarProgreso();
-    }
-  
-    function actualizarProgreso() {
-      const total = bocadilloActual.receta.length;
-      contador.textContent = `${seleccion.length} / ${total}`;
-      checks.innerHTML = "";
-      for (let i = 0; i < seleccion.length; i++) {
-        const span = document.createElement("span");
-        span.textContent = "✅";
-        span.className = "check";
-        checks.appendChild(span);
+  <head>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Juego de Bocadillos</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        background: #f2f2f2;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 0;
+        padding: 1rem;
       }
-    }
-  
-    function crearBotones() {
-      contIzq.innerHTML = "<h2>Carnes</h2>";
-      contDer.innerHTML = "<h2>Fiambres / Queso</h2>";
-      contComp.innerHTML = "";
-  
-      ingredientes.izquierda.forEach(ing => {
-        const btn = document.createElement("button");
-        btn.textContent = ing;
-        btn.onclick = () => seleccionarIngrediente(ing);
-        contIzq.appendChild(btn);
-      });
-  
-      ingredientes.derecha.forEach(ing => {
-        const btn = document.createElement("button");
-        btn.textContent = ing;
-        btn.onclick = () => seleccionarIngrediente(ing);
-        contDer.appendChild(btn);
-      });
-  
-      ingredientes.complementos.forEach(ing => {
-        const btn = document.createElement("button");
-        btn.textContent = ing;
-        btn.onclick = () => seleccionarIngrediente(ing);
-        contComp.appendChild(btn);
-      });
-    }
-  
-    function seleccionarIngrediente(ing) {
-      const receta = bocadilloActual.receta;
-      const paso = seleccion.length;
-      if (ing === receta[paso]) {
-        seleccion.push(ing);
+
+      .contenedor-app {
+        width: 100%;
+        max-width: 430px; /* simula pantalla de móvil grande */
+      }
+
+      h1 {
+        font-size: 1.8rem;
+        text-align: center;
+        margin-bottom: 0.5rem;
+      }
+
+      #progreso {
+        height: 1.6rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        justify-content: center;
+      }
+
+      .check {
+        color: green;
+        font-size: 1.2rem;
+      }
+
+      .contador {
+        font-weight: bold;
+        font-size: 1rem;
+      }
+
+      .feedback {
+        min-height: 1.6rem;
+        margin: 10px 0;
+        font-weight: bold;
+        font-size: 1.2rem;
+        text-align: center;
+        white-space: pre-wrap;
+      }
+
+      .contenedores {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        gap: 0.75rem;
+      }
+
+      .fila {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        justify-content: center;
+        gap: 0.5rem;
+      }
+
+      .contenedor {
+        background: white;
+        padding: 0.5rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        flex: 0 0 auto;
+        min-width: 120px;
+      }
+
+      .contenedor h2 {
+        margin-bottom: 0.25rem;
+        font-size: 1rem;
+      }
+
+      .complementos {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.4rem;
+      }
+
+      button {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.95rem;
+        cursor: pointer;
+        border-radius: 5px;
+        border: none;
+        background-color: #4caf50;
+        color: white;
+        transition: background 0.3s;
+      }
+
+      button:hover {
+        background-color: #45a049;
+      }
+
+      .confeti {
+        position: fixed;
+        width: 8px;
+        height: 8px;
+        background: red;
+        opacity: 0.9;
+        z-index: 9999;
+        pointer-events: none;
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="contenedor-app">
+      <h1 id="titulo">Cargando...</h1>
+      <div id="progreso">
+        <div class="contador" id="contador">0 / 0</div>
+        <div id="checks"></div>
+      </div>
+      <div class="feedback" id="feedback"></div>
+      <div class="contenedores">
+        <div class="fila">
+          <div class="contenedor" id="izquierda"><h2>Carnes</h2></div>
+          <div class="contenedor" id="derecha"><h2>Fiambres / Queso</h2></div>
+        </div>
+        <div class="contenedor" id="complementos">
+          <h2>Complementos</h2>
+          <div class="complementos" id="complementos-grid"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const bocadillos = [
+        {
+          nombre: "Chivito",
+          receta: ["Mayonesa", "Lechuga", "Tomate", "Lomo", "Beicon"],
+        },
+        { nombre: "Brascada", receta: ["Ternera", "Jamón", "Cebolla"] },
+        { nombre: "Almusafes", receta: ["Sobrasada", "Queso", "Cebolla"] },
+        {
+          nombre: "Manchego",
+          receta: ["Chuletas", "Ajoaceite", "Huevo frito"],
+        },
+        {
+          nombre: "Valencia",
+          receta: ["Tomate rayado", "Salsa verde", "Lomo"],
+        },
+        {
+          nombre: "Nápoles",
+          receta: ["Jamón", "Queso", "Huevo frito", "Orégano"],
+        },
+        {
+          nombre: "Mediterráneo",
+          receta: ["Mayonesa", "Pechuga", "Beicon", "Cebolla"],
+        },
+        { nombre: "Ibérico", receta: ["Tomate rayado", "Jamón"] },
+        { nombre: "Pagés", receta: ["Tomate rayado", "Longaniza"] },
+        { nombre: "Queso", receta: ["Tomate rayado", "Queso"] },
+        {
+          nombre: "Campero",
+          receta: ["Mayonesa", "Pechuga", "Beicon", "Pimiento", "Cebolla"],
+        },
+      ];
+
+      const ingredientes = {
+        izquierda: ["Lomo", "Ternera", "Pechuga"],
+        derecha: ["Queso", "Beicon", "Jamón"],
+        complementos: [
+          "Lechuga",
+          "Tomate",
+          "Cebolla",
+          "Pimiento",
+          "Tomate rayado",
+          "Salsa verde",
+          "Mayonesa",
+          "Sobrasada",
+          "Huevo frito",
+          "Orégano",
+          "Chuletas",
+          "Ajoaceite",
+          "Longaniza",
+        ],
+      };
+
+      let seleccion = [];
+
+      // Estadísticas con campos extendidos
+      let stats = bocadillos.map(() => ({
+        aciertos: 0,
+        fallos: 0,
+        ultimaVez: null,
+        congelado: false,
+      }));
+
+      const titulo = document.getElementById("titulo");
+      const feedback = document.getElementById("feedback");
+      const contIzq = document.getElementById("izquierda");
+      const contDer = document.getElementById("derecha");
+      const contComp = document.getElementById("complementos-grid");
+      const checks = document.getElementById("checks");
+      const contador = document.getElementById("contador");
+
+      function elegirBocadillo() {
+        const ahora = Date.now();
+        const ponderado = [];
+
+        bocadillos.forEach((boc, i) => {
+          const s = stats[i];
+          const fallos = s.fallos ?? 0;
+          const antiguedad = s.ultimaVez ? (ahora - s.ultimaVez) / 1000 : 99999;
+
+          // Bocadillos nunca mostrados => prioridad máxima
+          const peso = 1 + fallos * 3 + antiguedad / 30; // puedes ajustar divisores
+          for (let j = 0; j < Math.max(1, Math.floor(peso)); j++) {
+            ponderado.push(i);
+          }
+        });
+
+        const elegido = ponderado[Math.floor(Math.random() * ponderado.length)];
+        stats[elegido].ultimaVez = Date.now(); // actualiza último uso
+        return bocadillos[elegido];
+      }
+
+      let bocadilloActual = null;
+      let idxActual = null;
+
+      function cargarBocadillo() {
+        bocadilloActual = elegirBocadillo();
+        idxActual = bocadillos.indexOf(bocadilloActual);
+        titulo.textContent = bocadilloActual.nombre;
+        seleccion = [];
+        stats[idxActual].congelado = false; // descongelar siempre al iniciar
         feedback.textContent = " ";
         actualizarProgreso();
-        if (seleccion.length === receta.length) {
-          lanzarConfeti();
-          feedback.textContent = "🎉 Bocadillo completo!";
-          stats[idxActual].aciertos++;
-          stats[idxActual].congelado = false; // aseguramos descongelado
-          setTimeout(() => {
-            cargarBocadillo();
-          }, 2000);
-        }
-      } else {
-        feedback.textContent = "❌ Incorrecto. Intenta de nuevo.";
-        if (!stats[idxActual].congelado) {
-          stats[idxActual].fallos++;
-          stats[idxActual].congelado = true;
-        }
-        seleccion = [];
-        actualizarProgreso();
       }
-    }
-  
-    crearBotones();
-    cargarBocadillo();
 
-    function lanzarConfeti() {
-      const colores = ["#FFC107", "#4CAF50", "#2196F3", "#FF5722", "#E91E63"];
-      for (let i = 0; i < 60; i++) {
-        const confeti = document.createElement("div");
-        confeti.className = "confeti";
-        document.body.appendChild(confeti);
-      
-        let x = window.innerWidth / 2;
-        let y = window.innerHeight / 2;
-        const tamaño = Math.random() * 6 + 4;
-        const dx = (Math.random() - 0.5) * 10;
-        const dy = Math.random() * -10 - 4;
-        let vy = dy;
-        let rot = Math.random() * 360;
-        let rSpeed = (Math.random() - 0.5) * 10;
-        const color = colores[Math.floor(Math.random() * colores.length)];
-      
-        confeti.style.width = tamaño + "px";
-        confeti.style.height = tamaño + "px";
-        confeti.style.background = color;
-        confeti.style.left = x + "px";
-        confeti.style.top = y + "px";
-        confeti.style.transform = `rotate(${rot}deg)`;
-      
-        function animar() {
-          x += dx;
-          y += vy;
-          vy += 0.3;
-          rot += rSpeed;
+      function actualizarProgreso() {
+        const total = bocadilloActual.receta.length;
+        contador.textContent = `${seleccion.length} / ${total}`;
+        checks.innerHTML = "";
+        for (let i = 0; i < seleccion.length; i++) {
+          const span = document.createElement("span");
+          span.textContent = "✅";
+          span.className = "check";
+          checks.appendChild(span);
+        }
+      }
+
+      function crearBotones() {
+        contIzq.innerHTML = "<h2>Carnes</h2>";
+        contDer.innerHTML = "<h2>Fiambres / Queso</h2>";
+        contComp.innerHTML = "";
+
+        ingredientes.izquierda.forEach((ing) => {
+          const btn = document.createElement("button");
+          btn.textContent = ing;
+          btn.onclick = () => seleccionarIngrediente(ing);
+          contIzq.appendChild(btn);
+        });
+
+        ingredientes.derecha.forEach((ing) => {
+          const btn = document.createElement("button");
+          btn.textContent = ing;
+          btn.onclick = () => seleccionarIngrediente(ing);
+          contDer.appendChild(btn);
+        });
+
+        ingredientes.complementos.forEach((ing) => {
+          const btn = document.createElement("button");
+          btn.textContent = ing;
+          btn.onclick = () => seleccionarIngrediente(ing);
+          contComp.appendChild(btn);
+        });
+      }
+
+      function seleccionarIngrediente(ing) {
+        const receta = bocadilloActual.receta;
+        const paso = seleccion.length;
+        if (ing === receta[paso]) {
+          seleccion.push(ing);
+          feedback.textContent = " ";
+          actualizarProgreso();
+          if (seleccion.length === receta.length) {
+            lanzarConfeti();
+            feedback.textContent = "🎉 Bocadillo completo!";
+            stats[idxActual].aciertos++;
+            stats[idxActual].congelado = false; // aseguramos descongelado
+            setTimeout(() => {
+              cargarBocadillo();
+            }, 2000);
+          }
+        } else {
+          feedback.textContent = "❌ Incorrecto. Intenta de nuevo.";
+          if (!stats[idxActual].congelado) {
+            stats[idxActual].fallos++;
+            stats[idxActual].congelado = true;
+          }
+          seleccion = [];
+          actualizarProgreso();
+        }
+      }
+
+      crearBotones();
+      cargarBocadillo();
+
+      function lanzarConfeti() {
+        const colores = ["#FFC107", "#4CAF50", "#2196F3", "#FF5722", "#E91E63"];
+        for (let i = 0; i < 60; i++) {
+          const confeti = document.createElement("div");
+          confeti.className = "confeti";
+          document.body.appendChild(confeti);
+
+          let x = window.innerWidth / 2;
+          let y = window.innerHeight / 2;
+          const tamaño = Math.random() * 6 + 4;
+          const dx = (Math.random() - 0.5) * 10;
+          const dy = Math.random() * -10 - 4;
+          let vy = dy;
+          let rot = Math.random() * 360;
+          let rSpeed = (Math.random() - 0.5) * 10;
+          const color = colores[Math.floor(Math.random() * colores.length)];
+
+          confeti.style.width = tamaño + "px";
+          confeti.style.height = tamaño + "px";
+          confeti.style.background = color;
           confeti.style.left = x + "px";
           confeti.style.top = y + "px";
           confeti.style.transform = `rotate(${rot}deg)`;
-        
-          if (y < window.innerHeight + 100) {
-            requestAnimationFrame(animar);
-          } else {
-            confeti.remove();
-          }
-        }
-      
-        animar();
-      }
-    }
 
-  </script>
-  
-</body>
+          function animar() {
+            x += dx;
+            y += vy;
+            vy += 0.3;
+            rot += rSpeed;
+            confeti.style.left = x + "px";
+            confeti.style.top = y + "px";
+            confeti.style.transform = `rotate(${rot}deg)`;
+
+            if (y < window.innerHeight + 100) {
+              requestAnimationFrame(animar);
+            } else {
+              confeti.remove();
+            }
+          }
+
+          animar();
+        }
+      }
+    </script>
+  </body>
 </html>
