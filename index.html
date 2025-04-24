@@ -177,11 +177,15 @@
           nombre: "Campero",
           receta: ["Mayonesa", "Pechuga", "Beicon", "Pimiento", "Cebolla"],
         },
+        {
+          nombre: "Hamburguesa",
+          receta: ["Mayonesa", "Lechuga", "Tomate", "Hamburguesa", "Queso"],
+	},
       ];
 
       const ingredientes = {
-        izquierda: ["Lomo", "Ternera", "Pechuga"],
-        derecha: ["Queso", "Beicon", "Jamón"],
+        izquierda: ["Lomo", "Ternera", "Pechuga", "Hamburguesa", "Chuletas"],
+        derecha: ["Queso", "Beicon", "Jamón", "Longaniza", "Huevo frito"],
         complementos: [
           "Lechuga",
           "Tomate",
@@ -191,11 +195,8 @@
           "Salsa verde",
           "Mayonesa",
           "Sobrasada",
-          "Huevo frito",
           "Orégano",
-          "Chuletas",
           "Ajoaceite",
-          "Longaniza",
         ],
       };
 
@@ -322,7 +323,7 @@
 
       function lanzarConfeti() {
         const colores = ["#FFC107", "#4CAF50", "#2196F3", "#FF5722", "#E91E63"];
-        for (let i = 0; i < 60; i++) {
+        for (let i = 0; i < 30; i++) {
           const confeti = document.createElement("div");
           confeti.className = "confeti";
           document.body.appendChild(confeti);
