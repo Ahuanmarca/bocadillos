@@ -135,16 +135,16 @@
       { nombre: "Chivito", receta: ["Mayonesa", "Lechuga", "Tomate", "Lomo", "Beicon"] },
       { nombre: "Brascada", receta: ["Ternera", "Jamón", "Cebolla"] },
       { nombre: "Almusafes", receta: ["Sobrasada", "Queso", "Cebolla"] },
-      { nombre: "Manchego", receta: ["Chuletas", "Ajoaceite", "Huevo Frito"] },
+      { nombre: "Manchego", receta: ["Chuletas", "Ajoaceite", "Huevo frito"] },
       { nombre: "Valencia", receta: ["Tomate rayado", "Salsa verde", "Lomo"] },
       { nombre: "Nápoles", receta: ["Jamón", "Queso", "Huevo frito", "Orégano"] },
       { nombre: "Mediterráneo", receta: ["Mayonesa", "Pechuga", "Beicon", "Cebolla"] },
-      { nombre: "Ibérico", receta: ["Tomate rayado", "Jamón"]},
-      { nombre: "Pagés", receta: ["Tomate rayado", "Longaniza"]},
-      { nombre: "Queso", receta: ["Tomate rayado", "Queso"]},
+      { nombre: "Ibérico", receta: ["Tomate rayado", "Jamón"] },
+      { nombre: "Pagés", receta: ["Tomate rayado", "Longaniza"] },
+      { nombre: "Queso", receta: ["Tomate rayado", "Queso"] },
       { nombre: "Campero", receta: ["Mayonesa", "Pechuga", "Beicon", "Pimiento", "Cebolla"] }
     ];
-
+  
     const ingredientes = {
       izquierda: ["Lomo", "Ternera", "Pechuga"],
       derecha: ["Queso", "Beicon", "Jamón"],
@@ -154,10 +154,17 @@
         "Huevo frito", "Orégano", "Chuletas", "Ajoaceite", "Longaniza"
       ]
     };
-
+  
     let seleccion = [];
-    let stats = bocadillos.map(() => ({ aciertos: 0, fallos: 0 }));
-
+  
+    // Estadísticas con campos extendidos
+    let stats = bocadillos.map(() => ({
+      aciertos: 0,
+      fallos: 0,
+      ultimaVez: null,
+      congelado: false
+    }));
+  
     const titulo = document.getElementById("titulo");
     const feedback = document.getElementById("feedback");
     const contIzq = document.getElementById("izquierda");
@@ -165,29 +172,41 @@
     const contComp = document.getElementById("complementos-grid");
     const checks = document.getElementById("checks");
     const contador = document.getElementById("contador");
-
+  
     function elegirBocadillo() {
+      const ahora = Date.now();
       const ponderado = [];
+  
       bocadillos.forEach((boc, i) => {
-        const { fallos, aciertos } = stats[i];
-        const peso = 1 + fallos - 0.5 * aciertos;
+        const s = stats[i];
+        const fallos = s.fallos ?? 0;
+        const antiguedad = s.ultimaVez ? (ahora - s.ultimaVez) / 1000 : 99999;
+  
+        // Bocadillos nunca mostrados => prioridad máxima
+        const peso = 1 + fallos * 3 + antiguedad / 30; // puedes ajustar divisores
         for (let j = 0; j < Math.max(1, Math.floor(peso)); j++) {
           ponderado.push(i);
         }
       });
-      return bocadillos[ponderado[Math.floor(Math.random() * ponderado.length)]];
+  
+      const elegido = ponderado[Math.floor(Math.random() * ponderado.length)];
+      stats[elegido].ultimaVez = Date.now(); // actualiza último uso
+      return bocadillos[elegido];
     }
-
+  
     let bocadilloActual = null;
-
+    let idxActual = null;
+  
     function cargarBocadillo() {
       bocadilloActual = elegirBocadillo();
+      idxActual = bocadillos.indexOf(bocadilloActual);
       titulo.textContent = bocadilloActual.nombre;
       seleccion = [];
+      stats[idxActual].congelado = false; // descongelar siempre al iniciar
       feedback.textContent = " ";
       actualizarProgreso();
     }
-
+  
     function actualizarProgreso() {
       const total = bocadilloActual.receta.length;
       contador.textContent = `${seleccion.length} / ${total}`;
@@ -199,26 +218,26 @@
         checks.appendChild(span);
       }
     }
-
+  
     function crearBotones() {
       contIzq.innerHTML = "<h2>Carnes</h2>";
       contDer.innerHTML = "<h2>Fiambres / Queso</h2>";
       contComp.innerHTML = "";
-
+  
       ingredientes.izquierda.forEach(ing => {
         const btn = document.createElement("button");
         btn.textContent = ing;
         btn.onclick = () => seleccionarIngrediente(ing);
         contIzq.appendChild(btn);
       });
-
+  
       ingredientes.derecha.forEach(ing => {
         const btn = document.createElement("button");
         btn.textContent = ing;
         btn.onclick = () => seleccionarIngrediente(ing);
         contDer.appendChild(btn);
       });
-
+  
       ingredientes.complementos.forEach(ing => {
         const btn = document.createElement("button");
         btn.textContent = ing;
@@ -226,32 +245,36 @@
         contComp.appendChild(btn);
       });
     }
-
+  
     function seleccionarIngrediente(ing) {
       const receta = bocadilloActual.receta;
       const paso = seleccion.length;
-      const idx = bocadillos.indexOf(bocadilloActual);
       if (ing === receta[paso]) {
         seleccion.push(ing);
         feedback.textContent = " ";
         actualizarProgreso();
         if (seleccion.length === receta.length) {
           feedback.textContent = "🎉 Bocadillo completo!";
-          stats[idx].aciertos++;
+          stats[idxActual].aciertos++;
+          stats[idxActual].congelado = false; // aseguramos descongelado
           setTimeout(() => {
             cargarBocadillo();
           }, 2000);
         }
       } else {
         feedback.textContent = "❌ Incorrecto. Intenta de nuevo.";
-        stats[idx].fallos++;
+        if (!stats[idxActual].congelado) {
+          stats[idxActual].fallos++;
+          stats[idxActual].congelado = true;
+        }
         seleccion = [];
         actualizarProgreso();
       }
     }
-
+  
     crearBotones();
     cargarBocadillo();
   </script>
+  
 </body>
 </html>
