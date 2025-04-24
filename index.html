@@ -37,6 +37,7 @@
       font-size: 1rem;
     }
     .feedback {
+      min-height: 1.6rem;
       margin: 10px;
       font-weight: bold;
       font-size: 1.2rem;
@@ -101,7 +102,7 @@
     <div class="contador" id="contador">0 / 0</div>
     <div id="checks"></div>
   </div>
-  <div class="feedback" id="feedback"></div>
+  <div class="feedback" id="feedback"> </div>
   <div class="contenedores">
     <div class="fila">
       <div class="contenedor" id="izquierda"><h2>Carnes</h2></div>
@@ -163,7 +164,7 @@
       bocadilloActual = elegirBocadillo();
       titulo.textContent = bocadilloActual.nombre;
       seleccion = [];
-      feedback.textContent = "";
+      feedback.textContent = " ";
       actualizarProgreso();
     }
 
@@ -212,7 +213,7 @@
       const idx = bocadillos.indexOf(bocadilloActual);
       if (ing === receta[paso]) {
         seleccion.push(ing);
-        feedback.textContent = "";
+        feedback.textContent = " ";
         actualizarProgreso();
         if (seleccion.length === receta.length) {
           feedback.textContent = "🎉 Bocadillo completo!";
