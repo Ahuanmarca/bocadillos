@@ -110,6 +110,18 @@
     button:hover {
       background-color: #45a049;
     }
+
+    .confeti {
+      position: fixed;
+      width: 8px;
+      height: 8px;
+      background: red;
+      opacity: 0.9;
+      z-index: 9999;
+      pointer-events: none;
+      border-radius: 2px;
+    }
+
   </style>
 </head>
 <body>
@@ -256,6 +268,7 @@
         feedback.textContent = " ";
         actualizarProgreso();
         if (seleccion.length === receta.length) {
+          lanzarConfeti();
           feedback.textContent = "🎉 Bocadillo completo!";
           stats[idxActual].aciertos++;
           stats[idxActual].congelado = false; // aseguramos descongelado
@@ -276,6 +289,51 @@
   
     crearBotones();
     cargarBocadillo();
+
+    function lanzarConfeti() {
+      const colores = ["#FFC107", "#4CAF50", "#2196F3", "#FF5722", "#E91E63"];
+      for (let i = 0; i < 60; i++) {
+        const confeti = document.createElement("div");
+        confeti.className = "confeti";
+        document.body.appendChild(confeti);
+      
+        let x = window.innerWidth / 2;
+        let y = window.innerHeight / 2;
+        const tamaño = Math.random() * 6 + 4;
+        const dx = (Math.random() - 0.5) * 10;
+        const dy = Math.random() * -10 - 4;
+        let vy = dy;
+        let rot = Math.random() * 360;
+        let rSpeed = (Math.random() - 0.5) * 10;
+        const color = colores[Math.floor(Math.random() * colores.length)];
+      
+        confeti.style.width = tamaño + "px";
+        confeti.style.height = tamaño + "px";
+        confeti.style.background = color;
+        confeti.style.left = x + "px";
+        confeti.style.top = y + "px";
+        confeti.style.transform = `rotate(${rot}deg)`;
+      
+        function animar() {
+          x += dx;
+          y += vy;
+          vy += 0.3;
+          rot += rSpeed;
+          confeti.style.left = x + "px";
+          confeti.style.top = y + "px";
+          confeti.style.transform = `rotate(${rot}deg)`;
+        
+          if (y < window.innerHeight + 100) {
+            requestAnimationFrame(animar);
+          } else {
+            confeti.remove();
+          }
+        }
+      
+        animar();
+      }
+    }
+
   </script>
   
 </body>
