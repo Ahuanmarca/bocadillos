@@ -18,6 +18,23 @@
     h1 {
       font-size: 1.8rem;
       text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    #progreso {
+      height: 1.5rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      justify-content: center;
+    }
+    .check {
+      color: green;
+      font-size: 1.2rem;
+    }
+    .contador {
+      font-weight: bold;
+      font-size: 1rem;
     }
     .feedback {
       margin: 10px;
@@ -27,12 +44,19 @@
     }
     .contenedores {
       display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 1rem;
+      flex-direction: column;
       width: 100%;
       max-width: 1000px;
       margin-top: 1rem;
+      gap: 1rem;
+    }
+    .fila {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      justify-content: center;
+      gap: 1rem;
+      overflow-x: auto;
     }
     .contenedor {
       background: white;
@@ -43,12 +67,18 @@
       flex-direction: column;
       align-items: center;
       gap: 10px;
-      flex: 1 1 280px;
-      min-width: 40%;
+      flex: 0 0 auto;
+      min-width: 150px;
     }
     .contenedor h2 {
       margin-bottom: 0.5rem;
       font-size: 1.1rem;
+    }
+    .complementos {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem;
     }
     button {
       padding: 0.7rem 1.2rem;
@@ -59,72 +89,100 @@
       background-color: #4CAF50;
       color: white;
       transition: background 0.3s;
-      width: 100%;
     }
     button:hover {
       background-color: #45a049;
-    }
-
-    @media (max-width: 500px) {
-      h1 {
-        font-size: 1.4rem;
-      }
-      .feedback {
-        font-size: 1rem;
-      }
     }
   </style>
 </head>
 <body>
   <h1 id="titulo">Cargando...</h1>
+  <div id="progreso">
+    <div class="contador" id="contador">0 / 0</div>
+    <div id="checks"></div>
+  </div>
   <div class="feedback" id="feedback"></div>
   <div class="contenedores">
-    <div class="contenedor" id="izquierda"><h2>Carnes</h2></div>
-    <div class="contenedor" id="derecha"><h2>Fiambres / Queso</h2></div>
-    <div class="contenedor" id="complementos"><h2>Complementos</h2></div>
+    <div class="fila">
+      <div class="contenedor" id="izquierda"><h2>Carnes</h2></div>
+      <div class="contenedor" id="derecha"><h2>Fiambres / Queso</h2></div>
+    </div>
+    <div class="contenedor" id="complementos">
+      <h2>Complementos</h2>
+      <div class="complementos" id="complementos-grid"></div>
+    </div>
   </div>
 
   <script>
     const bocadillos = [
-      { nombre: "Chivito", receta: ["Mayonesa", "Lechuga", "Tomate rodajas", "Lomo de cerdo", "Beicon"] },
+      { nombre: "Chivito", receta: ["Mayonesa", "Lechuga", "Tomate", "Lomo", "Beicon"] },
       { nombre: "Brascada", receta: ["Ternera", "Jamón", "Cebolla"] },
       { nombre: "Almusafes", receta: ["Sobrasada", "Queso", "Cebolla"] },
-      { nombre: "Valencia", receta: ["Tomate rayado", "Salsa verde", "Lomo de cerdo"] },
+      { nombre: "Valencia", receta: ["Tomate rayado", "Salsa verde", "Lomo"] },
       { nombre: "Nápoles", receta: ["Jamón", "Queso", "Huevo frito", "Orégano"] },
-      { nombre: "Mediterráneo", receta: ["Mayonesa", "Pechuga de pollo", "Beicon", "Cebolla"] },
-      { nombre: "Campero", receta: ["Pechuga de pollo", "Beicon", "Pimiento", "Cebolla", "Mayonesa"] }
+      { nombre: "Mediterráneo", receta: ["Mayonesa", "Pechuga", "Beicon", "Cebolla"] },
+      { nombre: "Campero", receta: ["Pechuga", "Beicon", "Pimiento", "Cebolla", "Mayonesa"] }
     ];
 
     const ingredientes = {
-      izquierda: ["Lomo de cerdo", "Ternera", "Pechuga de pollo"],
+      izquierda: ["Lomo", "Ternera", "Pechuga"],
       derecha: ["Queso", "Beicon", "Jamón"],
       complementos: [
-        "Lechuga", "Tomate rodajas", "Cebolla", "Pimiento",
+        "Lechuga", "Tomate", "Cebolla", "Pimiento",
         "Tomate rayado", "Salsa verde", "Mayonesa", "Sobrasada",
         "Huevo frito", "Orégano"
       ]
     };
 
-    let indice = 0;
     let seleccion = [];
+    let stats = bocadillos.map(() => ({ aciertos: 0, fallos: 0 }));
 
     const titulo = document.getElementById("titulo");
     const feedback = document.getElementById("feedback");
     const contIzq = document.getElementById("izquierda");
     const contDer = document.getElementById("derecha");
-    const contComp = document.getElementById("complementos");
+    const contComp = document.getElementById("complementos-grid");
+    const checks = document.getElementById("checks");
+    const contador = document.getElementById("contador");
+
+    function elegirBocadillo() {
+      const ponderado = [];
+      bocadillos.forEach((boc, i) => {
+        const { fallos, aciertos } = stats[i];
+        const peso = 1 + fallos - 0.5 * aciertos;
+        for (let j = 0; j < Math.max(1, Math.floor(peso)); j++) {
+          ponderado.push(i);
+        }
+      });
+      return bocadillos[ponderado[Math.floor(Math.random() * ponderado.length)]];
+    }
+
+    let bocadilloActual = null;
 
     function cargarBocadillo() {
-      const b = bocadillos[indice];
-      titulo.textContent = b.nombre;
+      bocadilloActual = elegirBocadillo();
+      titulo.textContent = bocadilloActual.nombre;
       seleccion = [];
       feedback.textContent = "";
+      actualizarProgreso();
+    }
+
+    function actualizarProgreso() {
+      const total = bocadilloActual.receta.length;
+      contador.textContent = `${seleccion.length} / ${total}`;
+      checks.innerHTML = "";
+      for (let i = 0; i < seleccion.length; i++) {
+        const span = document.createElement("span");
+        span.textContent = "✅";
+        span.className = "check";
+        checks.appendChild(span);
+      }
     }
 
     function crearBotones() {
       contIzq.innerHTML = "<h2>Carnes</h2>";
       contDer.innerHTML = "<h2>Fiambres / Queso</h2>";
-      contComp.innerHTML = "<h2>Complementos</h2>";
+      contComp.innerHTML = "";
 
       ingredientes.izquierda.forEach(ing => {
         const btn = document.createElement("button");
@@ -149,21 +207,25 @@
     }
 
     function seleccionarIngrediente(ing) {
-      const receta = bocadillos[indice].receta;
+      const receta = bocadilloActual.receta;
       const paso = seleccion.length;
+      const idx = bocadillos.indexOf(bocadilloActual);
       if (ing === receta[paso]) {
         seleccion.push(ing);
-        feedback.textContent = "✅ Correcto";
+        feedback.textContent = "";
+        actualizarProgreso();
         if (seleccion.length === receta.length) {
           feedback.textContent = "🎉 Bocadillo completo!";
+          stats[idx].aciertos++;
           setTimeout(() => {
-            indice = (indice + 1) % bocadillos.length;
             cargarBocadillo();
           }, 2000);
         }
       } else {
         feedback.textContent = "❌ Incorrecto. Intenta de nuevo.";
+        stats[idx].fallos++;
         seleccion = [];
+        actualizarProgreso();
       }
     }
 
